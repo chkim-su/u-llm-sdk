@@ -1,12 +1,24 @@
 ---
 name: u-llm-sdk
-description: Use this skill when the user asks about "LLM SDK", "multi-provider LLM", "Claude/Codex/Gemini integration", "u-llm-sdk", "unified LLM client", "quick_run", "parallel_run", "multi-LLM orchestration", "consensus voting", "brainstorm module", or needs to programmatically call multiple LLM providers.
+description: Use this skill when the user asks about "LLM SDK", "multi-provider LLM", "Claude/Codex/Gemini integration", "u-llm-sdk", "unified LLM client", "quick_run", "parallel_run", "multi-LLM orchestration", "consensus voting", "brainstorm module", "session management", "template_run", "UnifiedAdvanced", "AgentDefinition", or needs to programmatically call multiple LLM providers.
 version: 0.3.0
 ---
 
 # U-LLM-SDK: Unified LLM SDK
 
 A Python SDK for unified multi-provider LLM access supporting Claude, Codex, and Gemini.
+
+## API Reference Documentation
+
+| Reference | Description |
+|-----------|-------------|
+| [Core Client](references/core-client.md) | LLM, LLMSync, LLMResult |
+| [Quick Utilities](references/quick-utilities.md) | quick_run, quick_text, parallel_run, template_run |
+| [Configuration](references/configuration.md) | LLMConfig, presets, provider options |
+| [Providers](references/providers.md) | ClaudeProvider, CodexProvider, GeminiProvider |
+| [Orchestration](references/orchestration.md) | ClarityGate, ConsensusLoop, BrainstormModule |
+| [Session Management](references/session-management.md) | SessionTemplate, get_session_manager |
+| [Advanced Client](references/advanced-client.md) | UnifiedAdvanced, AgentDefinition |
 
 ## Installation
 
