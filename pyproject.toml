@@ -37,9 +37,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/chanhokim/multivers-sdk"
-Repository = "https://github.com/chanhokim/multivers-sdk"
-Documentation = "https://github.com/chanhokim/multivers-sdk#readme"
+Homepage = "https://github.com/chkim-su/u-llm-sdk"
+Repository = "https://github.com/chkim-su/u-llm-sdk"
+Documentation = "https://github.com/chkim-su/u-llm-sdk#readme"
 
 [project.optional-dependencies]
 dev = [
