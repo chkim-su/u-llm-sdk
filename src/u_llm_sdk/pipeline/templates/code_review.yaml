@@ -1,0 +1,44 @@
+# Code Review Pipeline
+# Read-only analysis with multiple perspectives
+
+name: code_review
+description: |
+  Multi-perspective code review pipeline.
+  Security, performance, and maintainability analysis.
+version: "1.0.0"
+
+variables:
+  review_depth: thorough
+
+boundaries:
+  max_budget_usd: 1.0
+  max_timeout_seconds: 600
+  max_files_modified: 0
+  allow_shell_commands: false
+  allow_web_access: false
+
+phases:
+  - name: security_review
+    type: delegation
+    provider: claude
+    config:
+      session_template: security_analyst
+      read_only: true
+    timeout_seconds: 300
+
+  - name: performance_review
+    type: delegation
+    provider: claude
+    config:
+      session_template: performance_analyst
+      read_only: true
+    timeout_seconds: 300
+
+  - name: aggregate
+    type: review
+    provider: codex
+    config:
+      aggregate_previous: true
+      format: markdown
+    optional: true
+    timeout_seconds: 120

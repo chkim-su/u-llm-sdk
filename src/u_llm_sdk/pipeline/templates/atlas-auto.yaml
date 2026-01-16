@@ -1,0 +1,198 @@
+# Atlas-Auto Pipeline
+# Orchestrated multi-LLM workflow with structured review gates
+#
+# Flow:
+#   0. prepare (Task classification + template/plugin selection)
+#   1. design (Gemini brainstorm)
+#   2. clarity_check (Claude questions → Gemini answers, session resume)
+#   3. plan (Claude via feature-dev)
+#   4. plan_review (Codex) + plan_fix (Claude) - max 3 iterations
+#   5. execute (Claude, autonomous)
+#   6. result_review (Codex) + result_fix (Claude) - max 3 iterations
+#
+# Agent Roles:
+#   - Claude: Orchestrator + Executor (plan, implement, fix)
+#   - Gemini: Clarity partner (answers Claude's questions with session context)
+#   - Codex: Reviewer only (Plan Review, Result Review) - never modifies
+#
+# Dynamic Configuration:
+#   - Task type auto-detected from request
+#   - System prompt template selected based on task type
+#   - Plugin chain configured per task type
+
+name: atlas-auto
+description: |
+  Atlas autonomous pipeline with structured review gates.
+  Claude orchestrates, Gemini clarifies, Codex reviews.
+  All modifications are performed by Claude.
+  Dynamically adapts to task type (feature, refactoring, integration, etc.)
+version: "2.1.0"
+
+variables:
+  max_review_iterations: 3
+  session_context_enabled: true
+  # Dynamic configuration (set in prepare phase)
+  task_type: auto  # auto-detected or explicit
+  system_template: auto  # auto-selected based on task_type
+  plugin_chain: auto  # auto-selected based on task_type
+
+boundaries:
+  max_budget_usd: 3.0
+  max_timeout_seconds: 2400
+  require_tests: true
+  require_typecheck: true
+  allow_shell_commands: true
+  allow_web_access: false
+
+phases:
+  # Phase 0: Preparation
+  # Classify task and configure dynamic settings
+  - name: prepare
+    type: custom
+    config:
+      handler: task_preparation
+      # Detect task type from request
+      detect_task_type: true
+      # Extract codebase context for template injection
+      extract_codebase_context: true
+      # Output variables set for subsequent phases:
+      #   - task_type: detected task type
+      #   - system_template: selected template name
+      #   - plugin_chain: list of plugins to use
+      #   - codebase_context: extracted context string
+      #   - project_conventions: detected conventions
+    timeout_seconds: 30
+
+  # Phase 1: Design Brainstorm
+  # Gemini leads multi-LLM brainstorming to establish approach
+  - name: design
+    type: brainstorm
+    provider: gemini
+    config:
+      topic_template: "Design implementation approach for: {request}"
+      max_rounds: 3
+      consensus_threshold: 0.67
+      # Session context will be stored for clarity_check
+      store_session_context: true
+    on_failure: abort
+    timeout_seconds: 300
+
+  # Phase 2: Clarity Check (Claude → Gemini Q&A)
+  # Claude identifies ambiguities, Gemini answers with session resume
+  - name: clarity_check
+    type: clarity_dialogue
+    config:
+      questioner: claude
+      responder: gemini
+      # Gemini receives previous brainstorm context
+      session_resume: true
+      max_rounds: 3
+      # Required outputs from clarity resolution
+      required_outputs:
+        - term_definitions
+        - scope_boundaries
+        - exception_handling
+        - success_criteria
+    on_failure: ask_user
+    on_needs_input: ask_user
+    timeout_seconds: 180
+
+  # Phase 3: Planning (Claude with dynamic template/plugin)
+  # Claude creates detailed implementation plan
+  # Uses system_template and plugin from prepare phase
+  - name: plan
+    type: delegation
+    provider: claude
+    config:
+      # Dynamic: uses value from prepare phase
+      system_template: "{system_template}"
+      plugin: "{plugin_chain}"
+      mode: plan_only
+      # Receives clarity_check outputs as context
+      include_clarity_context: true
+      # Inject codebase context into system prompt
+      inject_codebase_context: true
+    on_failure: abort
+    timeout_seconds: 300
+
+  # Phase 4: Plan Review (Codex)
+  # Codex reviews plan using Review Contract
+  - name: plan_review
+    type: review
+    provider: codex
+    config:
+      review_type: plan
+      review_contract: codex_review_contract
+      aspects:
+        - scope_validity
+        - risk_identification
+        - verification_strategy
+        - requirement_alignment
+      max_iterations: 3
+    on_failure: goto:plan_fix
+    timeout_seconds: 180
+
+  # Phase 4b: Plan Fix (Claude)
+  # Claude fixes plan based on Codex review
+  - name: plan_fix
+    type: delegation
+    provider: claude
+    config:
+      mode: fix
+      fix_target: plan
+      # Loop back to plan_review, max 3 times
+      loop_to: plan_review
+      max_loops: 3
+    on_failure: ask_user
+    timeout_seconds: 180
+
+  # Phase 5: Execution (Claude autonomous)
+  # Claude implements the approved plan
+  # Uses same system_template and plugin from prepare phase
+  - name: execute
+    type: delegation
+    provider: claude
+    config:
+      # Dynamic: uses value from prepare phase
+      system_template: "{system_template}"
+      plugin: "{plugin_chain}"
+      mode: implement
+      autonomous: true
+      # Apply boundaries from plan
+      apply_plan_boundaries: true
+      # Inject codebase context into system prompt
+      inject_codebase_context: true
+    on_failure: abort
+    timeout_seconds: 1200
+
+  # Phase 6: Result Review (Codex)
+  # Codex reviews implementation result
+  - name: result_review
+    type: review
+    provider: codex
+    config:
+      review_type: result
+      review_contract: codex_review_contract
+      aspects:
+        - requirement_fulfillment
+        - hallucination_check
+        - placeholder_detection
+        - hardcoding_detection
+        - test_coverage
+        - regression_check
+      max_iterations: 3
+    on_failure: goto:result_fix
+    timeout_seconds: 300
+
+  # Phase 6b: Result Fix (Claude)
+  # Claude fixes result based on Codex review
+  - name: result_fix
+    type: delegation
+    provider: claude
+    config:
+      mode: fix
+      fix_target: result
+      loop_to: result_review
+      max_loops: 3
+    on_failure: ask_user
+    timeout_seconds: 300

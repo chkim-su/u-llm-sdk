@@ -1,0 +1,37 @@
+# Quick Fix Pipeline
+# Fast, focused bug fix without brainstorming
+
+name: quick_fix
+description: |
+  Quick bug fix pipeline.
+  Skips design phase, goes straight to implementation.
+version: "1.0.0"
+
+variables:
+  fix_scope: minimal
+
+boundaries:
+  max_budget_usd: 0.5
+  max_timeout_seconds: 300
+  max_files_modified: 3
+  require_tests: false
+  require_typecheck: false
+  allow_shell_commands: true
+  allow_web_access: false
+
+phases:
+  - name: clarity_check
+    type: clarity_gate
+    provider: claude
+    config:
+      min_score: 0.6
+    on_failure: abort
+    timeout_seconds: 30
+
+  - name: fix
+    type: delegation
+    provider: claude
+    config:
+      session_template: python_expert
+      minimal_changes: true
+    timeout_seconds: 180

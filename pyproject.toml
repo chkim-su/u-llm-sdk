@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "u-llm-sdk"
+version = "0.3.0"
+description = "Unified LLM SDK with multi-provider support for Claude, Codex, and Gemini"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+    {name = "Chanho Kim", email = "chanho.kim.dev@gmail.com"}
+]
+keywords = ["llm", "sdk", "ai", "anthropic", "claude", "gemini", "codex", "orchestration", "rag", "multi-llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "anthropic>=0.21.0",
+    "google-generativeai>=0.3.0",
+    "pydantic>=2.0.0",
+    "tenacity>=8.0.0",
+    "packaging>=21.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chanhokim/multivers-sdk"
+Repository = "https://github.com/chanhokim/multivers-sdk"
+Documentation = "https://github.com/chanhokim/multivers-sdk#readme"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+# Optional: tree-sitter for accurate TypeScript parsing in delta_compliance
+treesitter = [
+    "tree-sitter>=0.20.0",
+    "tree-sitter-languages>=1.10.0",
+]
+# Optional: Gemini API direct access (GeminiAPIProvider)
+# Note: google-generativeai (base dependency) is the older SDK
+# google-genai is the newer unified SDK with async support
+gemini-api = [
+    "google-genai>=0.8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["u_llm_sdk*"]
+
+[tool.setuptools.package-data]
+u_llm_sdk = ["py.typed", "**/*.md", "**/*.yaml", "**/*.yml"]
+"u_llm_sdk.types" = ["py.typed"]
+"u_llm_sdk.session" = ["templates/*.md"]
+"u_llm_sdk.pipeline" = ["templates/*.yaml"]
+"u_llm_sdk.prompts" = ["**/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]

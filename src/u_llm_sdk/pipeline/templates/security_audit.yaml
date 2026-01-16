@@ -1,0 +1,50 @@
+# Security Audit Pipeline
+# Focused security analysis with strict boundaries
+
+name: security_audit
+description: |
+  Security-focused audit pipeline.
+  OWASP, CVE, and vulnerability analysis.
+version: "1.0.0"
+
+variables:
+  audit_scope: comprehensive
+
+boundaries:
+  max_budget_usd: 1.5
+  max_timeout_seconds: 900
+  max_files_modified: 0
+  allow_shell_commands: false
+  allow_web_access: true  # For CVE lookup
+
+phases:
+  - name: clarity_check
+    type: clarity_gate
+    provider: claude
+    config:
+      focus: security_scope
+    on_failure: abort
+    timeout_seconds: 60
+
+  - name: vulnerability_scan
+    type: delegation
+    provider: claude
+    config:
+      session_template: security_analyst
+      read_only: true
+      focus_areas:
+        - authentication
+        - authorization
+        - input_validation
+        - cryptography
+        - dependencies
+    timeout_seconds: 600
+
+  - name: cve_check
+    type: review
+    provider: codex
+    config:
+      check_cve: true
+      check_dependencies: true
+    optional: true
+    timeout_seconds: 300
