@@ -46,7 +46,10 @@ htmlcov/
 
 # Local files
 *.local.md
-.claude/local/
+.claude/
+.claude-plugin/
+.serena/
+skills/
 
 # OS files
 .DS_Store
